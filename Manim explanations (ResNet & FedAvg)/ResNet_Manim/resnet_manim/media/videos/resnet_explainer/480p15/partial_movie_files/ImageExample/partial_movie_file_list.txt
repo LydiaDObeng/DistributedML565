@@ -1,0 +1,9 @@
+# This file is used internally by FFMPEG.
+file 'file:C:/Users/megzu/OneDrive - University of Arizona/Intro to DL Project/resnet_manim/media/videos/resnet_explainer/480p15/partial_movie_files/ImageExample/1185818338_3428964031_223132457.mp4'
+file 'file:C:/Users/megzu/OneDrive - University of Arizona/Intro to DL Project/resnet_manim/media/videos/resnet_explainer/480p15/partial_movie_files/ImageExample/624642324_707661050_4050906511.mp4'
+file 'file:C:/Users/megzu/OneDrive - University of Arizona/Intro to DL Project/resnet_manim/media/videos/resnet_explainer/480p15/partial_movie_files/ImageExample/624642324_3791828829_642449532.mp4'
+file 'file:C:/Users/megzu/OneDrive - University of Arizona/Intro to DL Project/resnet_manim/media/videos/resnet_explainer/480p15/partial_movie_files/ImageExample/624642324_952589423_3934384984.mp4'
+file 'file:C:/Users/megzu/OneDrive - University of Arizona/Intro to DL Project/resnet_manim/media/videos/resnet_explainer/480p15/partial_movie_files/ImageExample/624642324_2676133789_1188865039.mp4'
+file 'file:C:/Users/megzu/OneDrive - University of Arizona/Intro to DL Project/resnet_manim/media/videos/resnet_explainer/480p15/partial_movie_files/ImageExample/624642324_847384173_586498956.mp4'
+file 'file:C:/Users/megzu/OneDrive - University of Arizona/Intro to DL Project/resnet_manim/media/videos/resnet_explainer/480p15/partial_movie_files/ImageExample/624642324_1884654375_990676986.mp4'
+file 'file:C:/Users/megzu/OneDrive - University of Arizona/Intro to DL Project/resnet_manim/media/videos/resnet_explainer/480p15/partial_movie_files/ImageExample/624642324_3163221738_4191877507.mp4'
