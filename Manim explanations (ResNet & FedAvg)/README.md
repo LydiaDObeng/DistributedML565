@@ -92,24 +92,6 @@ Full setup instructions: [FedAvg README](FedAvg_Manim/README.md) | [ResNet READM
 
 ---
 
-## What You'll Learn
-
-### Federated Averaging (FedAvg)
-- Privacy-preserving distributed machine learning
-- How multiple clients train without sharing data
-- Key parameters: C (client fraction), E (epochs), η (learning rate)
-- Server aggregation with weighted averaging
-- Real-world applications: healthcare, mobile devices, finance
-
-### Residual Networks (ResNet)
-- Why deep networks have vanishing gradient problems
-- How skip connections solve this challenge
-- Layer types: Conv, BatchNorm, ReLU, Add
-- ResNet architectures: 18, 34, 50, 101, 152 layers
-- Image transformation examples
-
----
-
 
 ## Recommended Learning Path
 
@@ -187,29 +169,6 @@ Full setup instructions: [FedAvg README](FedAvg_Manim/README.md) | [ResNet READM
 - **Interactive:** Quick parameter testing
 - **Manim:** High-quality presentation visuals
 - **Combined:** Complete reference toolkit
-
----
-
-## Features
-
-### Interactive Platform Features
-- Step-by-step algorithm walkthrough
-- Adjustable parameters with sliders
-- Auto-play and manual control modes
-- Dark/Light theme toggle
-- Color-coded visual elements
-- Real-time explanations
-- Progress tracking
-- Mobile-friendly
-
-### Manim Animation Features
-- Professional-quality rendering
-- Mathematical precision
-- Smooth animations
-- Multiple quality levels (480p to 4K)
-- Customizable scenes
-- Export to video format
-- Perfect for presentations
 
 ---
 
