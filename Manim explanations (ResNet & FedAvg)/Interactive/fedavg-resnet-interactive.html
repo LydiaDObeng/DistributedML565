@@ -1,0 +1,1715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FedAvg & ResNet Interactive Explainer</title>
+    <style>
+        :root {
+            /* Polo Club inspired colors - softer, more educational palette */
+            --primary-blue: #4A90E2;
+            --primary-purple: #7B68EE;
+            --success-green: #5CB85C;
+            --warning-orange: #F5A623;
+            --danger-red: #E85D75;
+            --info-teal: #4ECDC4;
+            
+            /* Light mode */
+            --bg-gradient-start: #667eea;
+            --bg-gradient-end: #764ba2;
+            --container-bg: #ffffff;
+            --text-primary: #2c3e50;
+            --text-secondary: #555;
+            --sidebar-bg: #f8f9fa;
+            --border-color: #e0e0e0;
+            --card-bg: #ffffff;
+            --explanation-bg: #f0f7ff;
+            --canvas-bg: #fafafa;
+            --metric-border: #e0e0e0;
+            --legend-bg: #ffffff;
+            --server-color: #4A90E2;
+            --client-inactive: #95A5A6;
+            --client-selected: #F5A623;
+            --client-training: #E85D75;
+            --client-complete: #5CB85C;
+            --update-color: #7B68EE;
+            --accent-color: #667eea;
+            --tab-active: #667eea;
+            --tab-inactive: #95A5A6;
+        }
+
+        [data-theme="dark"] {
+            /* Dark mode */
+            --bg-gradient-start: #1a1a2e;
+            --bg-gradient-end: #16213e;
+            --container-bg: #1e1e2e;
+            --text-primary: #e0e0e0;
+            --text-secondary: #b0b0b0;
+            --sidebar-bg: #16161e;
+            --border-color: #2a2a3a;
+            --card-bg: #252530;
+            --explanation-bg: #1a1a28;
+            --canvas-bg: #252530;
+            --metric-border: #3a3a4a;
+            --legend-bg: #252530;
+            --server-color: #5FA3E8;
+            --client-inactive: #7F8C8D;
+            --client-selected: #FFB84D;
+            --client-training: #FF7A93;
+            --client-complete: #6FCF6F;
+            --update-color: #9A7FFF;
+            --accent-color: #7B8FF7;
+            --tab-active: #7B8FF7;
+            --tab-inactive: #5A6266;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+            min-height: 100vh;
+            padding: 20px;
+            transition: background 0.3s ease;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: var(--container-bg);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            transition: background 0.3s ease;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-purple) 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+        }
+
+        .theme-toggle {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .theme-toggle:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.05);
+        }
+
+        .theme-toggle-icon {
+            font-size: 20px;
+        }
+
+        .theme-toggle-text {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .tabs {
+            display: flex;
+            background: var(--sidebar-bg);
+            border-bottom: 3px solid var(--border-color);
+            transition: background 0.3s ease;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 1.2em;
+            font-weight: 600;
+            color: var(--tab-inactive);
+            background: var(--sidebar-bg);
+            border: none;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .tab:hover {
+            background: var(--card-bg);
+        }
+
+        .tab.active {
+            color: var(--tab-active);
+            background: var(--container-bg);
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--tab-active);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 0;
+            min-height: 600px;
+        }
+
+        .sidebar {
+            background: var(--sidebar-bg);
+            padding: 25px;
+            border-right: 2px solid var(--border-color);
+            overflow-y: auto;
+            max-height: 80vh;
+            transition: background 0.3s ease, border-color 0.3s ease;
+        }
+
+        .controls-section {
+            margin-bottom: 30px;
+        }
+
+        .controls-section h3 {
+            color: var(--accent-color);
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 5px;
+            transition: color 0.3s ease;
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.9em;
+            transition: color 0.3s ease;
+        }
+
+        .control-group input[type="range"] {
+            width: 100%;
+            margin-bottom: 5px;
+        }
+
+        .control-group input[type="checkbox"] {
+            margin-right: 8px;
+        }
+
+        .control-value {
+            text-align: center;
+            font-weight: bold;
+            color: var(--accent-color);
+            font-size: 1.1em;
+            padding: 5px;
+            background: var(--card-bg);
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .step-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-purple) 100%);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-success {
+            background: var(--success-green);
+            color: white;
+        }
+
+        .btn-warning {
+            background: var(--warning-orange);
+            color: white;
+        }
+
+        .visualization-area {
+            padding: 30px;
+            position: relative;
+            background: var(--container-bg);
+            transition: background 0.3s ease;
+        }
+
+        .step-indicator {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-purple) 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        canvas {
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            background: var(--canvas-bg);
+            display: block;
+            margin: 0 auto;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .explanation-box {
+            background: var(--explanation-bg);
+            border-left: 4px solid var(--accent-color);
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .explanation-box h3 {
+            color: var(--accent-color);
+            margin-bottom: 10px;
+            transition: color 0.3s ease;
+        }
+
+        .explanation-box p {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 10px;
+            transition: color 0.3s ease;
+        }
+
+        .explanation-box ul {
+            color: var(--text-secondary);
+            line-height: 1.8;
+            margin-left: 20px;
+            margin-bottom: 10px;
+        }
+
+        .explanation-box li {
+            margin-bottom: 8px;
+        }
+
+        .formula {
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 1.1em;
+            text-align: center;
+            border: 2px solid var(--accent-color);
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+
+        .legend {
+            background: var(--legend-bg);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .legend h4 {
+            margin-bottom: 10px;
+            color: var(--text-primary);
+            transition: color 0.3s ease;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+            transition: color 0.3s ease;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            border: 2px solid var(--text-primary);
+            transition: border-color 0.3s ease;
+        }
+
+        .progress-bar {
+            background: var(--border-color);
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 10px;
+            transition: background 0.3s ease;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, var(--primary-blue), var(--primary-purple));
+            height: 100%;
+            transition: width 0.3s;
+        }
+
+        .metric-display {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .metric-card {
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid var(--metric-border);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .metric-card h4 {
+            color: var(--accent-color);
+            font-size: 0.9em;
+            margin-bottom: 5px;
+            transition: color 0.3s ease;
+        }
+
+        .metric-card .value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: var(--text-primary);
+            transition: color 0.3s ease;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .pulse {
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .slide-in {
+            animation: slideIn 0.5s ease-out;
+        }
+
+        .info-section {
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .info-section h4 {
+            color: var(--accent-color);
+            margin-bottom: 10px;
+            font-size: 1em;
+        }
+
+        .info-section p {
+            color: var(--text-secondary);
+            font-size: 0.85em;
+            line-height: 1.5;
+            margin-bottom: 8px;
+        }
+
+        .arch-examples {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .arch-item {
+            background: var(--explanation-bg);
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 3px solid var(--accent-color);
+        }
+
+        .arch-item strong {
+            color: var(--accent-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="theme-toggle" id="themeToggle">
+                <span class="theme-toggle-icon" id="themeIcon">🌙</span>
+                <span class="theme-toggle-text" id="themeText">Dark Mode</span>
+            </div>
+            <h1>FedAvg & ResNet Interactive Explainer</h1>
+            <p>Understanding Federated Learning and Residual Networks</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" data-tab="fedavg">Federated Averaging</button>
+            <button class="tab" data-tab="resnet">ResNet Architecture</button>
+        </div>
+
+        <!-- FedAvg Tab Content -->
+        <div class="tab-content active" id="fedavg">
+            <div class="main-content">
+                <div class="sidebar">
+                    <div class="controls-section">
+                        <h3>📊 Parameters</h3>
+                        
+                        <div class="control-group">
+                            <label>Client Fraction (C): Percentage of clients selected per round</label>
+                            <input type="range" id="clientFraction" min="0.2" max="1" step="0.1" value="0.6">
+                            <div class="control-value" id="clientFractionValue">0.6 (60%)</div>
+                        </div>
+
+                        <div class="control-group">
+                            <label>Local Epochs (E): Training iterations per client</label>
+                            <input type="range" id="localEpochs" min="1" max="10" step="1" value="5">
+                            <div class="control-value" id="localEpochsValue">5</div>
+                        </div>
+
+                        <div class="control-group">
+                            <label>Learning Rate (η): Step size for updates</label>
+                            <input type="range" id="learningRate" min="0.001" max="0.1" step="0.001" value="0.01">
+                            <div class="control-value" id="learningRateValue">0.01</div>
+                        </div>
+
+                        <div class="control-group">
+                            <label>Number of Clients: Total devices in federation</label>
+                            <input type="range" id="numClients" min="3" max="10" step="1" value="6">
+                            <div class="control-value" id="numClientsValue">6</div>
+                        </div>
+
+                        <div class="control-group">
+                            <label>Communication Rounds (T): Total training rounds</label>
+                            <input type="range" id="totalRounds" min="1" max="20" step="1" value="10">
+                            <div class="control-value" id="totalRoundsValue">10</div>
+                        </div>
+                    </div>
+
+                    <div class="controls-section">
+                        <h3>🎮 Controls</h3>
+                        <div class="step-buttons">
+                            <button class="btn btn-success" id="startBtn">▶️ Start Algorithm</button>
+                            <button class="btn btn-primary" id="nextStepBtn" disabled>⏭️ Next Step</button>
+                            <button class="btn btn-warning" id="autoPlayBtn" disabled>⏯️ Auto Play</button>
+                            <button class="btn btn-secondary" id="resetBtn">🔄 Reset</button>
+                        </div>
+
+                        <div class="metric-display">
+                            <div class="metric-card">
+                                <h4>Current Round</h4>
+                                <div class="value" id="currentRound">0</div>
+                            </div>
+                            <div class="metric-card">
+                                <h4>Total Rounds</h4>
+                                <div class="value" id="totalRoundsDisplay">10</div>
+                            </div>
+                        </div>
+
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <div class="legend">
+                        <h4>Legend</h4>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #4A90E2;"></div>
+                            <span>Central Server</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #95A5A6;"></div>
+                            <span>Client (Inactive)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #F5A623;"></div>
+                            <span>Client (Selected)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #E85D75;"></div>
+                            <span>Client (Training)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #5CB85C;"></div>
+                            <span>Client (Completed)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #7B68EE;"></div>
+                            <span>Model Updates</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="visualization-area">
+                    <div class="step-indicator" id="stepIndicator">
+                        Welcome! Configure parameters and click "Start Algorithm"
+                    </div>
+
+                    <canvas id="fedavgCanvas" width="900" height="600"></canvas>
+
+                    <div class="explanation-box slide-in" id="explanationBox">
+                        <h3>About Federated Averaging</h3>
+                        <p>
+                            <strong>Federated Averaging (FedAvg)</strong> enables multiple clients (mobile phones, IoT devices, hospitals, etc.) 
+                            to collaboratively train a machine learning model on their local data without sharing private information.
+                        </p>
+                        <p>
+                            <strong>Privacy-Preserving:</strong> Each client trains locally on their data and only shares model updates, 
+                            ensuring data privacy while achieving collective learning.
+                        </p>
+                        <p>
+                            <strong>Example Use Cases:</strong>
+                        </p>
+                        <ul>
+                            <li>🏥 <strong>Healthcare:</strong> Hospitals collaborating on medical imaging (e.g., MIMIC-CXR) without sharing patient data</li>
+                            <li>📱 <strong>Mobile:</strong> Smartphones improving keyboard predictions while keeping typing data private</li>
+                            <li>🏦 <strong>Finance:</strong> Banks detecting fraud while protecting customer information</li>
+                        </ul>
+                        <div class="formula" id="formulaBox">
+                            Click "Start Algorithm" to begin the visualization!
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ResNet Tab Content -->
+        <div class="tab-content" id="resnet">
+            <div class="main-content">
+                <div class="sidebar">
+                    <div class="controls-section">
+                        <h3>🎯 ResNet Controls</h3>
+                        
+                        <div class="control-group">
+                            <label>Current Layer</label>
+                            <div class="control-value" id="resnetLayerValue">Input</div>
+                        </div>
+
+                        <div class="control-group">
+                            <label style="display: flex; align-items: center;">
+                                <input type="checkbox" id="showSkipConnection" checked>
+                                Show Skip Connection
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="controls-section">
+                        <h3>🎮 Controls</h3>
+                        <div class="step-buttons">
+                            <button class="btn btn-success" id="resnetStartBtn">▶️ Start Forward Pass</button>
+                            <button class="btn btn-primary" id="resnetNextBtn" disabled>⏭️ Next Layer</button>
+                            <button class="btn btn-warning" id="resnetAutoBtn" disabled>⏯️ Auto Play</button>
+                            <button class="btn btn-secondary" id="resnetResetBtn">🔄 Reset</button>
+                        </div>
+                    </div>
+
+                    <div class="legend">
+                        <h4>Layer Types</h4>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #5CB85C;"></div>
+                            <span>Convolution</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #4ECDC4;"></div>
+                            <span>Batch Normalization</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #F5A623;"></div>
+                            <span>ReLU Activation</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #FFD700;"></div>
+                            <span>Skip Connection</span>
+                        </div>
+                    </div>
+
+                    <div class="info-section">
+                        <h4>📚 ResNet Architectures</h4>
+                        <div class="arch-examples">
+                            <div class="arch-item">
+                                <strong>ResNet-18:</strong> 18 layers deep, ~11M parameters. Good for quick experiments.
+                            </div>
+                            <div class="arch-item">
+                                <strong>ResNet-34:</strong> 34 layers deep, ~21M parameters. Balanced performance.
+                            </div>
+                            <div class="arch-item">
+                                <strong>ResNet-50:</strong> 50 layers deep, ~25M parameters. Uses bottleneck blocks.
+                            </div>
+                            <div class="arch-item">
+                                <strong>ResNet-101:</strong> 101 layers deep, ~44M parameters. High accuracy.
+                            </div>
+                            <div class="arch-item">
+                                <strong>ResNet-152:</strong> 152 layers deep, ~60M parameters. State-of-the-art depth.
+                            </div>
+                        </div>
+                        <p style="margin-top: 10px; font-style: italic;">
+                            The number indicates total layers. Deeper networks can learn more complex features thanks to skip connections!
+                        </p>
+                    </div>
+                </div>
+
+                <div class="visualization-area">
+                    <div class="step-indicator" id="resnetStepIndicator">
+                        ResNet: Residual Learning Framework
+                    </div>
+
+                    <canvas id="resnetCanvas" width="900" height="600"></canvas>
+
+                    <div class="explanation-box slide-in" id="resnetExplanationBox">
+                        <h3>About Residual Networks (ResNet)</h3>
+                        <p>
+                            <strong>ResNet</strong> introduces skip connections (residual connections) that allow gradients to flow directly 
+                            through the network, solving the vanishing gradient problem in deep networks.
+                        </p>
+                        <p>
+                            <strong>Key Innovation:</strong> Instead of learning H(x), layers learn the residual F(x) 
+                            where H(x) = F(x) + x. This makes training very deep networks much easier and more stable.
+                        </p>
+                        <p>
+                            <strong>What Each Layer Does:</strong>
+                        </p>
+                        <ul>
+                            <li><strong>Convolution (Conv):</strong> Applies filters to extract features from the input. Learns spatial patterns like edges, textures, and shapes.</li>
+                            <li><strong>Batch Normalization (BN):</strong> Normalizes activations to have mean 0 and variance 1. Stabilizes training and speeds up convergence.</li>
+                            <li><strong>ReLU:</strong> Rectified Linear Unit activation function (max(0, x)). Introduces non-linearity and helps the network learn complex patterns.</li>
+                            <li><strong>Add (Skip Connection):</strong> Adds the input directly to the output. This is the "residual" that gives ResNet its power!</li>
+                        </ul>
+                        <p>
+                            <strong>Current Values Grid:</strong> When you step through layers, the 3×3 grid on the right shows the actual numerical values 
+                            at that layer. Watch how data transforms from input → convolution → normalization → activation → output. 
+                            The color intensity indicates value magnitude (darker = higher absolute values).
+                        </p>
+                        <div class="formula" id="resnetFormulaBox">
+                            y = F(x) + x (Residual Learning)
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Theme Management
+        const themeToggle = document.getElementById('themeToggle');
+        const themeIcon = document.getElementById('themeIcon');
+        const themeText = document.getElementById('themeText');
+        const html = document.documentElement;
+
+        const currentTheme = localStorage.getItem('theme') || 'light';
+        html.setAttribute('data-theme', currentTheme);
+        updateThemeUI(currentTheme);
+
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeUI(newTheme);
+            
+            if (activeTab === 'fedavg') {
+                drawFedAvg();
+            } else {
+                drawResNet();
+            }
+        });
+
+        function updateThemeUI(theme) {
+            if (theme === 'dark') {
+                themeIcon.textContent = '☀️';
+                themeText.textContent = 'Light Mode';
+            } else {
+                themeIcon.textContent = '🌙';
+                themeText.textContent = 'Dark Mode';
+            }
+        }
+
+        // Tab Management
+        let activeTab = 'fedavg';
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabName = tab.dataset.tab;
+                
+                tabs.forEach(t => t.classList.remove('active'));
+                tabContents.forEach(tc => tc.classList.remove('active'));
+                
+                tab.classList.add('active');
+                document.getElementById(tabName).classList.add('active');
+                
+                activeTab = tabName;
+                
+                if (tabName === 'fedavg') {
+                    drawFedAvg();
+                } else {
+                    drawResNet();
+                }
+            });
+        });
+
+        // FedAvg State and Logic
+        const fedavgState = {
+            step: 0,
+            round: 0,
+            params: {
+                clientFraction: 0.6,
+                localEpochs: 5,
+                learningRate: 0.01,
+                numClients: 6,
+                totalRounds: 10
+            },
+            clients: [],
+            selectedClients: [],
+            server: { x: 450, y: 100, radius: 40 },
+            isRunning: false,
+            autoPlay: false,
+            autoPlayInterval: null
+        };
+
+        const fedavgCanvas = document.getElementById('fedavgCanvas');
+        const fedavgCtx = fedavgCanvas.getContext('2d');
+
+        const steps = [
+            'Initialize', 'SelectClients', 'DistributeModel', 'LocalTraining',
+            'ComputeGradients', 'UpdateLocal', 'SendToServer', 'Aggregate', 'NextRound'
+        ];
+
+        const stepDescriptions = {
+            'Initialize': {
+                title: 'Step 1: Initialize Global Model',
+                description: 'The central server initializes the global model with random weights w⁰. This model will be collaboratively improved through federated learning across clients.',
+                formula: 'w⁰ ← InitializeModel()'
+            },
+            'SelectClients': {
+                title: 'Step 2: Select Client Subset',
+                description: 'Select a random fraction C of clients to participate in this round. This reduces communication costs while maintaining convergence.',
+                formula: 'S_t ← RandomSelect(C × K clients)'
+            },
+            'DistributeModel': {
+                title: 'Step 3: Distribute Global Model',
+                description: 'The server sends the current global model w^t to all selected clients. This is the starting point for local training.',
+                formula: 'Send w^t to all clients k ∈ S_t'
+            },
+            'LocalTraining': {
+                title: 'Step 4: Local Training',
+                description: 'Each selected client trains the model on their local data for E epochs. The data never leaves the client device, preserving privacy. Examples: hospitals training on medical images (MIMIC-CXR), phones on keyboard data, or banks on transaction records.',
+                formula: 'For each client k: Train on local data for E epochs'
+            },
+            'ComputeGradients': {
+                title: 'Step 5: Compute Local Gradients',
+                description: 'Each client computes gradients ∇F_k(w^t) on their local loss function. These gradients indicate how to improve the model for their specific data distribution.',
+                formula: 'g_k ← ∇F_k(w^t)'
+            },
+            'UpdateLocal': {
+                title: 'Step 6: Update Local Models',
+                description: 'Each client updates their local model using gradient descent with learning rate η. This produces client-specific model updates that reflect their local data.',
+                formula: 'w_k^(t+1) ← w^t - η∇F_k(w^t)'
+            },
+            'SendToServer': {
+                title: 'Step 7: Send Updates to Server',
+                description: 'Clients send their updated models w_k^(t+1) back to the server. Only model weights are transmitted, not the actual data, ensuring privacy.',
+                formula: 'Send w_k^(t+1) to server'
+            },
+            'Aggregate': {
+                title: 'Step 8: Weighted Aggregation',
+                description: 'The server aggregates client updates using a weighted average based on dataset sizes. Clients with more data have proportionally more influence on the global model.',
+                formula: 'w^(t+1) ← Σ(n_k/n)w_k^(t+1)'
+            },
+            'NextRound': {
+                title: 'Round Complete!',
+                description: 'One communication round is complete. The improved global model is ready for the next round of federated learning.',
+                formula: 't ← t + 1'
+            }
+        };
+
+        function initFedAvg() {
+            updateClientPositions();
+            drawFedAvg();
+            updateFedAvgUI();
+        }
+
+        function updateClientPositions() {
+            const numClients = fedavgState.params.numClients;
+            fedavgState.clients = [];
+            const startX = 150;
+            const spacing = (fedavgCanvas.width - 300) / (numClients - 1);
+            
+            for (let i = 0; i < numClients; i++) {
+                fedavgState.clients.push({
+                    x: startX + (i * spacing),
+                    y: 450,
+                    radius: 30,
+                    id: i + 1,
+                    selected: false,
+                    training: false,
+                    completed: false,
+                    dataSize: Math.floor(Math.random() * 500) + 100
+                });
+            }
+        }
+
+        function drawFedAvg() {
+            fedavgCtx.clearRect(0, 0, fedavgCanvas.width, fedavgCanvas.height);
+            
+            drawFedAvgConnections();
+            drawFedAvgServer();
+            drawFedAvgClients();
+            drawFedAvgDataIcons();
+            drawFedAvgLabels();
+        }
+
+        function drawFedAvgServer() {
+            const { x, y, radius } = fedavgState.server;
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            const serverColor = isDark ? '#5FA3E8' : '#4A90E2';
+            const serverColorDark = isDark ? '#4080C0' : '#3A7BC2';
+            
+            const gradient = fedavgCtx.createRadialGradient(x, y, radius * 0.5, x, y, radius * 1.5);
+            gradient.addColorStop(0, `${serverColor}50`);
+            gradient.addColorStop(1, `${serverColor}00`);
+            fedavgCtx.fillStyle = gradient;
+            fedavgCtx.fillRect(x - radius * 1.5, y - radius * 1.5, radius * 3, radius * 3);
+            
+            fedavgCtx.beginPath();
+            fedavgCtx.arc(x, y, radius, 0, Math.PI * 2);
+            fedavgCtx.fillStyle = serverColor;
+            fedavgCtx.fill();
+            fedavgCtx.strokeStyle = serverColorDark;
+            fedavgCtx.lineWidth = 3;
+            fedavgCtx.stroke();
+            
+            fedavgCtx.fillStyle = 'white';
+            fedavgCtx.font = 'bold 28px Arial';
+            fedavgCtx.textAlign = 'center';
+            fedavgCtx.textBaseline = 'middle';
+            fedavgCtx.fillText('☁️', x, y);
+            
+            fedavgCtx.fillStyle = isDark ? '#e0e0e0' : '#2c3e50';
+            fedavgCtx.font = 'bold 16px Arial';
+            fedavgCtx.fillText('Central Server', x, y - radius - 15);
+            
+            if (fedavgState.isRunning) {
+                fedavgCtx.fillStyle = isDark ? '#9A7FFF' : '#7B68EE';
+                fedavgCtx.font = 'bold 14px Arial';
+                fedavgCtx.fillText(`Round ${fedavgState.round + 1}`, x, y + radius + 20);
+            }
+        }
+
+        function drawFedAvgClients() {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            
+            fedavgState.clients.forEach((client, index) => {
+                const { x, y, radius, selected, training, completed } = client;
+                
+                let color = isDark ? '#7F8C8D' : '#95A5A6';
+                let strokeColor = isDark ? '#5A6266' : '#7F8C8D';
+                
+                if (completed) {
+                    color = isDark ? '#6FCF6F' : '#5CB85C';
+                    strokeColor = isDark ? '#5AB85A' : '#4BA84B';
+                } else if (training) {
+                    color = isDark ? '#FF7A93' : '#E85D75';
+                    strokeColor = isDark ? '#E65F7A' : '#C74A60';
+                } else if (selected) {
+                    color = isDark ? '#FFB84D' : '#F5A623';
+                    strokeColor = isDark ? '#E5A03D' : '#D4941F';
+                }
+                
+                if (selected || training || completed) {
+                    const gradient = fedavgCtx.createRadialGradient(x, y, radius * 0.5, x, y, radius * 1.5);
+                    gradient.addColorStop(0, `${color}60`);
+                    gradient.addColorStop(1, `${color}00`);
+                    fedavgCtx.fillStyle = gradient;
+                    fedavgCtx.fillRect(x - radius * 1.5, y - radius * 1.5, radius * 3, radius * 3);
+                }
+                
+                fedavgCtx.beginPath();
+                fedavgCtx.arc(x, y, radius, 0, Math.PI * 2);
+                fedavgCtx.fillStyle = color;
+                fedavgCtx.fill();
+                fedavgCtx.strokeStyle = strokeColor;
+                fedavgCtx.lineWidth = (selected || training || completed) ? 3 : 2;
+                fedavgCtx.stroke();
+                
+                fedavgCtx.fillStyle = 'white';
+                fedavgCtx.font = 'bold 24px Arial';
+                fedavgCtx.textAlign = 'center';
+                fedavgCtx.textBaseline = 'middle';
+                fedavgCtx.fillText('📱', x, y);
+                
+                if (completed) {
+                    fedavgCtx.fillStyle = 'white';
+                    fedavgCtx.font = 'bold 18px Arial';
+                    fedavgCtx.fillText('✓', x + 12, y - 12);
+                }
+                
+                fedavgCtx.fillStyle = isDark ? '#e0e0e0' : '#2c3e50';
+                fedavgCtx.font = 'bold 14px Arial';
+                fedavgCtx.fillText(`Client ${client.id}`, x, y + radius + 20);
+                
+                if (selected || training) {
+                    fedavgCtx.fillStyle = isDark ? '#b0b0b0' : '#7f8c8d';
+                    fedavgCtx.font = '12px Arial';
+                    fedavgCtx.fillText(`n=${client.dataSize}`, x, y + radius + 35);
+                }
+            });
+        }
+
+        function drawFedAvgDataIcons() {
+            if (fedavgState.step === steps.indexOf('LocalTraining') || 
+                fedavgState.step === steps.indexOf('ComputeGradients')) {
+                const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+                const dataColor = isDark ? '#FF7A93' : '#E85D75';
+                
+                fedavgState.selectedClients.forEach(clientIndex => {
+                    const client = fedavgState.clients[clientIndex];
+                    const { x, y } = client;
+                    
+                    for (let i = 0; i < 3; i++) {
+                        for (let j = 0; j < 3; j++) {
+                            fedavgCtx.beginPath();
+                            fedavgCtx.arc(x - 10 + j * 10, y - 10 + i * 10, 2, 0, Math.PI * 2);
+                            fedavgCtx.fillStyle = dataColor;
+                            fedavgCtx.fill();
+                        }
+                    }
+                });
+            }
+        }
+
+        function drawFedAvgConnections() {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            
+            if (fedavgState.step === steps.indexOf('DistributeModel')) {
+                const arrowColor = isDark ? '#FFB84D' : '#F5A623';
+                fedavgState.selectedClients.forEach(clientIndex => {
+                    drawArrow(
+                        fedavgState.server.x,
+                        fedavgState.server.y + fedavgState.server.radius,
+                        fedavgState.clients[clientIndex].x,
+                        fedavgState.clients[clientIndex].y - fedavgState.clients[clientIndex].radius,
+                        arrowColor,
+                        'w^t'
+                    );
+                });
+            } else if (fedavgState.step === steps.indexOf('SendToServer')) {
+                const arrowColor = isDark ? '#9A7FFF' : '#7B68EE';
+                fedavgState.selectedClients.forEach(clientIndex => {
+                    drawArrow(
+                        fedavgState.clients[clientIndex].x,
+                        fedavgState.clients[clientIndex].y - fedavgState.clients[clientIndex].radius,
+                        fedavgState.server.x,
+                        fedavgState.server.y + fedavgState.server.radius,
+                        arrowColor,
+                        `w_${clientIndex+1}^(t+1)`
+                    );
+                });
+            } else if (fedavgState.step === steps.indexOf('Aggregate')) {
+                const arrowColor = isDark ? '#9A7FFF' : '#7B68EE';
+                fedavgState.selectedClients.forEach(clientIndex => {
+                    drawArrow(
+                        fedavgState.clients[clientIndex].x,
+                        fedavgState.clients[clientIndex].y - fedavgState.clients[clientIndex].radius,
+                        fedavgState.server.x,
+                        fedavgState.server.y + fedavgState.server.radius,
+                        arrowColor,
+                        '',
+                        0.5
+                    );
+                });
+            }
+        }
+
+        function drawArrow(fromX, fromY, toX, toY, color, label = '', opacity = 1) {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            const headLength = 15;
+            const angle = Math.atan2(toY - fromY, toX - fromX);
+            
+            fedavgCtx.globalAlpha = opacity;
+            fedavgCtx.beginPath();
+            fedavgCtx.moveTo(fromX, fromY);
+            fedavgCtx.lineTo(toX, toY);
+            fedavgCtx.strokeStyle = color;
+            fedavgCtx.lineWidth = 3;
+            fedavgCtx.stroke();
+            
+            fedavgCtx.beginPath();
+            fedavgCtx.moveTo(toX, toY);
+            fedavgCtx.lineTo(
+                toX - headLength * Math.cos(angle - Math.PI / 6),
+                toY - headLength * Math.sin(angle - Math.PI / 6)
+            );
+            fedavgCtx.lineTo(
+                toX - headLength * Math.cos(angle + Math.PI / 6),
+                toY - headLength * Math.sin(angle + Math.PI / 6)
+            );
+            fedavgCtx.closePath();
+            fedavgCtx.fillStyle = color;
+            fedavgCtx.fill();
+            
+            if (label) {
+                const midX = (fromX + toX) / 2;
+                const midY = (fromY + toY) / 2;
+                fedavgCtx.fillStyle = isDark ? '#e0e0e0' : '#2c3e50';
+                fedavgCtx.font = 'bold 12px Arial';
+                fedavgCtx.textAlign = 'center';
+                fedavgCtx.fillText(label, midX + 20, midY);
+            }
+            
+            fedavgCtx.globalAlpha = 1;
+        }
+
+        function drawFedAvgLabels() {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            if (fedavgState.step === steps.indexOf('Aggregate')) {
+                fedavgCtx.fillStyle = isDark ? '#9A7FFF' : '#7B68EE';
+                fedavgCtx.font = 'bold 16px Arial';
+                fedavgCtx.textAlign = 'center';
+                fedavgCtx.fillText('Weighted Average', fedavgState.server.x, fedavgState.server.y + fedavgState.server.radius + 50);
+            }
+        }
+
+        function nextFedAvgStep() {
+            const currentStepName = steps[fedavgState.step];
+            
+            switch (currentStepName) {
+                case 'Initialize':
+                    fedavgState.round = 0;
+                    fedavgState.clients.forEach(client => {
+                        client.selected = false;
+                        client.training = false;
+                        client.completed = false;
+                    });
+                    break;
+                    
+                case 'SelectClients':
+                    selectClients();
+                    break;
+                    
+                case 'DistributeModel':
+                    break;
+                    
+                case 'LocalTraining':
+                    fedavgState.clients.forEach((client, i) => {
+                        client.training = fedavgState.selectedClients.includes(i);
+                    });
+                    break;
+                    
+                case 'ComputeGradients':
+                    break;
+                    
+                case 'UpdateLocal':
+                    fedavgState.clients.forEach((client, i) => {
+                        if (fedavgState.selectedClients.includes(i)) {
+                            client.training = false;
+                            client.completed = true;
+                        }
+                    });
+                    break;
+                    
+                case 'SendToServer':
+                    break;
+                    
+                case 'Aggregate':
+                    break;
+                    
+                case 'NextRound':
+                    fedavgState.round++;
+                    
+                    setTimeout(() => {
+                        if (fedavgState.round < fedavgState.params.totalRounds) {
+                            fedavgState.clients.forEach(client => {
+                                client.selected = false;
+                                client.training = false;
+                                client.completed = false;
+                            });
+                            fedavgState.step = 0;
+                            fedavgState.step = 1;
+                            nextFedAvgStep();
+                        } else {
+                            fedavgState.clients.forEach(client => {
+                                client.completed = true;
+                                client.selected = false;
+                                client.training = false;
+                            });
+                            updateFedAvgExplanation({
+                                title: '✅ Training Complete!',
+                                description: `Federated Averaging has completed all ${fedavgState.params.totalRounds} communication rounds. The global model has been collaboratively trained across all clients while preserving their private data.`,
+                                formula: `Final model: w^${fedavgState.params.totalRounds}`
+                            });
+                            fedavgState.isRunning = false;
+                            stopFedAvgAutoPlay();
+                            document.getElementById('nextStepBtn').disabled = true;
+                            document.getElementById('autoPlayBtn').disabled = true;
+                            drawFedAvg();
+                        }
+                    }, fedavgState.autoPlay ? 500 : 0);
+                    
+                    if (fedavgState.round >= fedavgState.params.totalRounds) {
+                        return;
+                    }
+                    break;
+            }
+            
+            fedavgState.step = (fedavgState.step + 1) % steps.length;
+            updateFedAvgStepIndicator();
+            updateFedAvgExplanation(stepDescriptions[currentStepName]);
+            drawFedAvg();
+            updateFedAvgProgress();
+        }
+
+        function selectClients() {
+            const numToSelect = Math.max(1, Math.floor(fedavgState.params.clientFraction * fedavgState.params.numClients));
+            fedavgState.selectedClients = [];
+            
+            const indices = Array.from({length: fedavgState.params.numClients}, (_, i) => i);
+            for (let i = 0; i < numToSelect; i++) {
+                const randomIndex = Math.floor(Math.random() * indices.length);
+                fedavgState.selectedClients.push(indices[randomIndex]);
+                indices.splice(randomIndex, 1);
+            }
+            
+            fedavgState.clients.forEach((client, i) => {
+                client.selected = fedavgState.selectedClients.includes(i);
+            });
+        }
+
+        function updateFedAvgStepIndicator() {
+            const currentStepName = steps[fedavgState.step];
+            const stepInfo = stepDescriptions[currentStepName];
+            document.getElementById('stepIndicator').textContent = 
+                `Round ${fedavgState.round + 1}/${fedavgState.params.totalRounds} - ${stepInfo.title}`;
+        }
+
+        function updateFedAvgExplanation(info) {
+            const box = document.getElementById('explanationBox');
+            box.innerHTML = `
+                <h3>${info.title}</h3>
+                <p>${info.description}</p>
+                <div class="formula">${info.formula}</div>
+            `;
+            box.classList.remove('slide-in');
+            void box.offsetWidth;
+            box.classList.add('slide-in');
+        }
+
+        function updateFedAvgProgress() {
+            const totalSteps = fedavgState.params.totalRounds * steps.length;
+            const currentStep = (fedavgState.round * steps.length) + fedavgState.step;
+            const progress = (currentStep / totalSteps) * 100;
+            document.getElementById('progressFill').style.width = `${progress}%`;
+        }
+
+        function updateFedAvgUI() {
+            document.getElementById('currentRound').textContent = fedavgState.round;
+            document.getElementById('totalRoundsDisplay').textContent = fedavgState.params.totalRounds;
+        }
+
+        function stopFedAvgAutoPlay() {
+            fedavgState.autoPlay = false;
+            document.getElementById('autoPlayBtn').textContent = '⏯️ Auto Play';
+            document.getElementById('nextStepBtn').disabled = false;
+            if (fedavgState.autoPlayInterval) {
+                clearInterval(fedavgState.autoPlayInterval);
+                fedavgState.autoPlayInterval = null;
+            }
+        }
+
+        // FedAvg Event Listeners
+        document.getElementById('clientFraction').addEventListener('input', (e) => {
+            fedavgState.params.clientFraction = parseFloat(e.target.value);
+            document.getElementById('clientFractionValue').textContent = 
+                `${fedavgState.params.clientFraction} (${Math.round(fedavgState.params.clientFraction * 100)}%)`;
+        });
+
+        document.getElementById('localEpochs').addEventListener('input', (e) => {
+            fedavgState.params.localEpochs = parseInt(e.target.value);
+            document.getElementById('localEpochsValue').textContent = fedavgState.params.localEpochs;
+        });
+
+        document.getElementById('learningRate').addEventListener('input', (e) => {
+            fedavgState.params.learningRate = parseFloat(e.target.value);
+            document.getElementById('learningRateValue').textContent = fedavgState.params.learningRate.toFixed(3);
+        });
+
+        document.getElementById('numClients').addEventListener('input', (e) => {
+            if (!fedavgState.isRunning) {
+                fedavgState.params.numClients = parseInt(e.target.value);
+                document.getElementById('numClientsValue').textContent = fedavgState.params.numClients;
+                updateClientPositions();
+                drawFedAvg();
+            }
+        });
+
+        document.getElementById('totalRounds').addEventListener('input', (e) => {
+            fedavgState.params.totalRounds = parseInt(e.target.value);
+            document.getElementById('totalRoundsValue').textContent = fedavgState.params.totalRounds;
+            document.getElementById('totalRoundsDisplay').textContent = fedavgState.params.totalRounds;
+        });
+
+        document.getElementById('startBtn').addEventListener('click', () => {
+            fedavgState.isRunning = true;
+            fedavgState.step = 0;
+            fedavgState.round = 0;
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('nextStepBtn').disabled = false;
+            document.getElementById('autoPlayBtn').disabled = false;
+            document.getElementById('numClients').disabled = true;
+            nextFedAvgStep();
+        });
+
+        document.getElementById('nextStepBtn').addEventListener('click', () => {
+            nextFedAvgStep();
+        });
+
+        document.getElementById('autoPlayBtn').addEventListener('click', () => {
+            if (fedavgState.autoPlay) {
+                stopFedAvgAutoPlay();
+            } else {
+                fedavgState.autoPlay = true;
+                document.getElementById('autoPlayBtn').textContent = '⏸️ Pause';
+                document.getElementById('nextStepBtn').disabled = true;
+                fedavgState.autoPlayInterval = setInterval(() => {
+                    if (fedavgState.isRunning) {
+                        nextFedAvgStep();
+                    } else {
+                        stopFedAvgAutoPlay();
+                    }
+                }, 2000);
+            }
+        });
+
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            stopFedAvgAutoPlay();
+            fedavgState.isRunning = false;
+            fedavgState.step = 0;
+            fedavgState.round = 0;
+            fedavgState.selectedClients = [];
+            fedavgState.clients.forEach(client => {
+                client.selected = false;
+                client.training = false;
+                client.completed = false;
+            });
+            
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('nextStepBtn').disabled = true;
+            document.getElementById('autoPlayBtn').disabled = true;
+            document.getElementById('numClients').disabled = false;
+            document.getElementById('currentRound').textContent = '0';
+            document.getElementById('progressFill').style.width = '0%';
+            document.getElementById('stepIndicator').textContent = 
+                'Welcome! Configure parameters and click "Start Algorithm"';
+            
+            updateFedAvgExplanation({
+                title: 'About Federated Averaging',
+                description: 'Federated Averaging (FedAvg) enables multiple clients to collaboratively train a machine learning model on their local data without sharing private information. Each client trains locally and only shares model updates, ensuring data privacy while achieving collective learning.',
+                formula: 'Click "Start Algorithm" to begin the visualization!'
+            });
+            
+            drawFedAvg();
+        });
+
+        // ResNet State and Logic
+        const resnetState = {
+            currentLayer: 0,
+            showSkip: true,
+            isRunning: false,
+            autoPlay: false,
+            layers: ['Input', 'Conv', 'BatchNorm', 'ReLU', 'Conv', 'BatchNorm', 'Add', 'Output'],
+            inputValues: [
+                [10.0, 20.0, 15.0],
+                [25.0, 40.0, 30.0],
+                [15.0, 25.0, 20.0]
+            ],
+            currentValues: null,
+            layerResults: []
+        };
+
+        const resnetCanvas = document.getElementById('resnetCanvas');
+        const resnetCtx = resnetCanvas.getContext('2d');
+
+        function initResNet() {
+            resnetState.currentValues = JSON.parse(JSON.stringify(resnetState.inputValues));
+            resnetState.layerResults = [resnetState.currentValues];
+            drawResNet();
+        }
+
+        function drawResNet() {
+            resnetCtx.clearRect(0, 0, resnetCanvas.width, resnetCanvas.height);
+            
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            const centerY = resnetCanvas.height / 2;
+            
+            const layerBoxWidth = 80;
+            const layerBoxHeight = 60;
+            const spacing = 100;
+            const startX = 50;
+            
+            resnetState.layers.forEach((layer, idx) => {
+                const x = startX + idx * spacing;
+                const y = centerY - layerBoxHeight / 2;
+                
+                if (layer === 'Add') return;
+                
+                let color = isDark ? '#7F8C8D' : '#95A5A6';
+                if (layer === 'Conv') color = isDark ? '#6FCF6F' : '#5CB85C';
+                else if (layer === 'BatchNorm') color = isDark ? '#4ECDC4' : '#4ECDC4';
+                else if (layer === 'ReLU') color = isDark ? '#FFB84D' : '#F5A623';
+                else if (layer === 'Input' || layer === 'Output') color = isDark ? '#5FA3E8' : '#4A90E2';
+                
+                if (idx === resnetState.currentLayer) {
+                    resnetCtx.shadowBlur = 20;
+                    resnetCtx.shadowColor = color;
+                }
+                
+                resnetCtx.fillStyle = color;
+                resnetCtx.fillRect(x, y, layerBoxWidth, layerBoxHeight);
+                resnetCtx.strokeStyle = isDark ? '#e0e0e0' : '#2c3e50';
+                resnetCtx.lineWidth = idx === resnetState.currentLayer ? 3 : 2;
+                resnetCtx.strokeRect(x, y, layerBoxWidth, layerBoxHeight);
+                
+                resnetCtx.shadowBlur = 0;
+                
+                resnetCtx.fillStyle = 'white';
+                resnetCtx.font = 'bold 14px Arial';
+                resnetCtx.textAlign = 'center';
+                resnetCtx.textBaseline = 'middle';
+                resnetCtx.fillText(layer, x + layerBoxWidth / 2, y + layerBoxHeight / 2);
+                
+                if (idx < resnetState.layers.length - 1 && layer !== 'Add' && resnetState.layers[idx + 1] !== 'Add') {
+                    const arrowColor = isDark ? '#e0e0e0' : '#2c3e50';
+                    drawResNetArrow(
+                        x + layerBoxWidth,
+                        y + layerBoxHeight / 2,
+                        startX + (idx + 1) * spacing,
+                        y + layerBoxHeight / 2,
+                        arrowColor
+                    );
+                }
+            });
+            
+            if (resnetState.showSkip) {
+                const skipColor = isDark ? '#FFD700' : '#FFD700';
+                const inputX = startX + layerBoxWidth;
+                const outputX = startX + 6 * spacing;
+                const skipY = centerY - 120;
+                
+                resnetCtx.strokeStyle = skipColor;
+                resnetCtx.lineWidth = 4;
+                resnetCtx.setLineDash([10, 5]);
+                resnetCtx.beginPath();
+                resnetCtx.moveTo(inputX, centerY);
+                resnetCtx.lineTo(inputX, skipY);
+                resnetCtx.lineTo(outputX, skipY);
+                resnetCtx.lineTo(outputX, centerY);
+                resnetCtx.stroke();
+                resnetCtx.setLineDash([]);
+                
+                resnetCtx.fillStyle = skipColor;
+                resnetCtx.font = 'bold 16px Arial';
+                resnetCtx.textAlign = 'center';
+                resnetCtx.fillText('Skip Connection (Identity)', (inputX + outputX) / 2, skipY - 15);
+            }
+            
+            if (resnetState.currentLayer > 0 && resnetState.layerResults.length > resnetState.currentLayer) {
+                drawValueGrid(resnetState.layerResults[resnetState.currentLayer], 650, 200);
+            }
+        }
+
+        function drawValueGrid(values, x, y) {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            const cellSize = 50;
+            
+            resnetCtx.fillStyle = isDark ? '#e0e0e0' : '#2c3e50';
+            resnetCtx.font = 'bold 14px Arial';
+            resnetCtx.textAlign = 'center';
+            resnetCtx.fillText('Current Values:', x + 75, y - 20);
+            
+            // Add explanation text
+            resnetCtx.font = '11px Arial';
+            resnetCtx.fillText('(After transformation)', x + 75, y - 5);
+            
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    const cellX = x + j * cellSize;
+                    const cellY = y + i * cellSize;
+                    const val = values[i][j];
+                    
+                    const opacity = Math.min(Math.abs(val) / 50, 1);
+                    resnetCtx.fillStyle = isDark ? `rgba(95, 163, 232, ${opacity * 0.5})` : `rgba(74, 144, 226, ${opacity * 0.5})`;
+                    resnetCtx.fillRect(cellX, cellY, cellSize, cellSize);
+                    
+                    resnetCtx.strokeStyle = isDark ? '#e0e0e0' : '#2c3e50';
+                    resnetCtx.lineWidth = 1;
+                    resnetCtx.strokeRect(cellX, cellY, cellSize, cellSize);
+                    
+                    resnetCtx.fillStyle = isDark ? '#e0e0e0' : '#2c3e50';
+                    resnetCtx.font = '12px Arial';
+                    resnetCtx.textAlign = 'center';
+                    resnetCtx.textBaseline = 'middle';
+                    resnetCtx.fillText(val.toFixed(1), cellX + cellSize / 2, cellY + cellSize / 2);
+                }
+            }
+        }
+
+        function drawResNetArrow(fromX, fromY, toX, toY, color) {
+            const headLength = 10;
+            const angle = Math.atan2(toY - fromY, toX - fromX);
+            
+            resnetCtx.beginPath();
+            resnetCtx.moveTo(fromX, fromY);
+            resnetCtx.lineTo(toX, toY);
+            resnetCtx.strokeStyle = color;
+            resnetCtx.lineWidth = 2;
+            resnetCtx.stroke();
+            
+            resnetCtx.beginPath();
+            resnetCtx.moveTo(toX, toY);
+            resnetCtx.lineTo(
+                toX - headLength * Math.cos(angle - Math.PI / 6),
+                toY - headLength * Math.sin(angle - Math.PI / 6)
+            );
+            resnetCtx.lineTo(
+                toX - headLength * Math.cos(angle + Math.PI / 6),
+                toY - headLength * Math.sin(angle + Math.PI / 6)
+            );
+            resnetCtx.closePath();
+            resnetCtx.fillStyle = color;
+            resnetCtx.fill();
+        }
+
+        function nextResNetLayer() {
+            if (resnetState.currentLayer >= resnetState.layers.length - 1) {
+                resnetState.isRunning = false;
+                document.getElementById('resnetNextBtn').disabled = true;
+                document.getElementById('resnetAutoBtn').disabled = true;
+                updateResNetExplanation({
+                    title: '✅ Forward Pass Complete!',
+                    description: 'The ResNet forward pass is complete. The skip connection allowed the gradient to flow directly from input to output, making training more stable. The output y = F(x) + x combines the learned residual F(x) with the identity mapping x.',
+                    formula: 'y = F(x) + x = Residual + Identity'
+                });
+                return;
+            }
+            
+            resnetState.currentLayer++;
+            const layer = resnetState.layers[resnetState.currentLayer];
+            
+            let newValues = JSON.parse(JSON.stringify(resnetState.currentValues));
+            
+            if (layer === 'Conv') {
+                newValues = newValues.map(row => row.map(val => val * 0.8 + 5));
+            } else if (layer === 'BatchNorm') {
+                const mean = newValues.flat().reduce((a, b) => a + b, 0) / 9;
+                const std = Math.sqrt(newValues.flat().reduce((a, b) => a + Math.pow(b - mean, 2), 0) / 9);
+                newValues = newValues.map(row => row.map(val => (val - mean) / (std + 1e-5) * 8 + 25));
+            } else if (layer === 'ReLU') {
+                newValues = newValues.map(row => row.map(val => Math.max(0, val)));
+            } else if (layer === 'Add') {
+                for (let i = 0; i < 3; i++) {
+                    for (let j = 0; j < 3; j++) {
+                        newValues[i][j] += resnetState.inputValues[i][j];
+                    }
+                }
+            }
+            
+            resnetState.currentValues = newValues;
+            resnetState.layerResults.push(newValues);
+            
+            document.getElementById('resnetLayerValue').textContent = layer;
+            
+            const descriptions = {
+                'Conv': {
+                    title: 'Convolution Layer',
+                    description: 'Applies learned filters to extract features from the input. The formula x × 0.8 + 5 is a simplified example. In real CNNs, convolution learns spatial patterns like edges, textures, and shapes by sliding filters across the input.',
+                    formula: 'Simplified: x × 0.8 + 5'
+                },
+                'BatchNorm': {
+                    title: 'Batch Normalization',
+                    description: 'Normalizes activations to have zero mean and unit variance. This stabilizes training by reducing internal covariate shift and allows higher learning rates. The formula: (x - μ) / σ, where μ is mean and σ is standard deviation.',
+                    formula: '(x - μ) / σ'
+                },
+                'ReLU': {
+                    title: 'ReLU Activation',
+                    description: 'Rectified Linear Unit (ReLU) introduces non-linearity: max(0, x). It sets all negative values to zero while keeping positive values unchanged. This simple function helps networks learn complex patterns and prevents vanishing gradients.',
+                    formula: 'max(0, x)'
+                },
+                'Add': {
+                    title: 'Skip Connection (Add)',
+                    description: 'This is the key ResNet innovation! Adds the original input directly to the transformed output: y = F(x) + x. This creates a shortcut path for gradients during backpropagation, enabling training of very deep networks (100+ layers).',
+                    formula: 'y = F(x) + x'
+                },
+                'Output': {
+                    title: 'Output',
+                    description: 'Final output combining all transformations. The residual block has learned to modify the input while the skip connection preserves important features. This makes ResNets easier to optimize than plain deep networks.',
+                    formula: 'Final: y = F(x) + x'
+                }
+            };
+            
+            updateResNetExplanation(descriptions[layer] || {
+                title: `Layer: ${layer}`,
+                description: 'Processing layer...',
+                formula: layer
+            });
+            
+            drawResNet();
+        }
+
+        function updateResNetExplanation(info) {
+            const box = document.getElementById('resnetExplanationBox');
+            box.innerHTML = `
+                <h3>${info.title}</h3>
+                <p>${info.description}</p>
+                <div class="formula">${info.formula}</div>
+            `;
+        }
+
+        // ResNet Event Listeners
+        document.getElementById('showSkipConnection').addEventListener('change', (e) => {
+            resnetState.showSkip = e.target.checked;
+            drawResNet();
+        });
+
+        document.getElementById('resnetStartBtn').addEventListener('click', () => {
+            resnetState.isRunning = true;
+            resnetState.currentLayer = 0;
+            resnetState.currentValues = JSON.parse(JSON.stringify(resnetState.inputValues));
+            resnetState.layerResults = [resnetState.currentValues];
+            
+            document.getElementById('resnetStartBtn').disabled = true;
+            document.getElementById('resnetNextBtn').disabled = false;
+            document.getElementById('resnetAutoBtn').disabled = false;
+            
+            drawResNet();
+        });
+
+        document.getElementById('resnetNextBtn').addEventListener('click', () => {
+            nextResNetLayer();
+        });
+
+        document.getElementById('resnetAutoBtn').addEventListener('click', () => {
+            if (resnetState.autoPlay) {
+                resnetState.autoPlay = false;
+                document.getElementById('resnetAutoBtn').textContent = '⏯️ Auto Play';
+                if (resnetState.autoPlayInterval) {
+                    clearInterval(resnetState.autoPlayInterval);
+                }
+            } else {
+                resnetState.autoPlay = true;
+                document.getElementById('resnetAutoBtn').textContent = '⏸️ Pause';
+                resnetState.autoPlayInterval = setInterval(() => {
+                    if (resnetState.isRunning) {
+                        nextResNetLayer();
+                    } else {
+                        resnetState.autoPlay = false;
+                        document.getElementById('resnetAutoBtn').textContent = '⏯️ Auto Play';
+                        clearInterval(resnetState.autoPlayInterval);
+                    }
+                }, 1500);
+            }
+        });
+
+        document.getElementById('resnetResetBtn').addEventListener('click', () => {
+            resnetState.isRunning = false;
+            resnetState.currentLayer = 0;
+            resnetState.autoPlay = false;
+            resnetState.currentValues = JSON.parse(JSON.stringify(resnetState.inputValues));
+            resnetState.layerResults = [resnetState.currentValues];
+            
+            document.getElementById('resnetStartBtn').disabled = false;
+            document.getElementById('resnetNextBtn').disabled = true;
+            document.getElementById('resnetAutoBtn').disabled = true;
+            document.getElementById('resnetLayerValue').textContent = 'Input';
+            
+            if (resnetState.autoPlayInterval) {
+                clearInterval(resnetState.autoPlayInterval);
+            }
+            
+            updateResNetExplanation({
+                title: 'About Residual Networks (ResNet)',
+                description: 'ResNet introduces skip connections that allow gradients to flow directly through the network, solving the vanishing gradient problem in deep networks. Instead of learning H(x), layers learn the residual F(x) where H(x) = F(x) + x.',
+                formula: 'y = F(x) + x (Residual Learning)'
+            });
+            
+            drawResNet();
+        });
+
+        // Initialize on load
+        initFedAvg();
+        initResNet();
+    </script>
+</body>
+</html>
