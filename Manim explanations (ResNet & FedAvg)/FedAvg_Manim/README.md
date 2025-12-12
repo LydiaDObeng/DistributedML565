@@ -1,167 +1,172 @@
-# FedAvg Explainer – Federated Learning Project
+# FedAvg Explainer – Federated Learning Animation
 
-An animated educational project that explains the Federated Averaging (FedAvg) algorithm using Manim, a Python engine for mathematical animations. The animation tells the “story” of one FedAvg round, from client selection to server aggregation, and highlights why FedAvg is important for federated learning. [web:22][web:32]
-
----
+An animated educational project that explains the Federated Averaging (FedAvg) algorithm using Manim, a Python engine for mathematical animations. The animation tells the "story" of one FedAvg round, from client selection to server aggregation, highlighting why FedAvg is important for federated learning.
 
 ## Project Overview
 
-This project creates a single, self‑contained animation that walks through:
+This project creates a single, self-contained animation that walks through:
 
-- What Federated Averaging is and why it matters in federated learning. [web:21][web:30]
-- The key FedAvg parameters:  
-  - \(C\): fraction of clients selected per round  
-  - \(E\): number of local epochs  
-  - \(\eta\): learning rate  
-  - \(T\): number of communication rounds [web:23]
-- Client selection and local training on their own data.
-- Local gradient computation and model updates.
-- Aggregation at the server using the FedAvg formula with weights \(n_k / n\).
-- How the global model improves over multiple communication rounds.
+- **What Federated Averaging is** and why it matters in federated learning
+- **Key FedAvg parameters:**
+  - `C`: fraction of clients selected per round
+  - `E`: number of local epochs
+  - `η`: learning rate
+  - `T`: number of communication rounds
+- **Client selection** and local training on their own data
+- **Local gradient computation** and model updates
+- **Server aggregation** using the FedAvg formula with weights `n_k / n`
+- **Global model improvement** over multiple communication rounds
 
 All of this is implemented in a single Manim scene named `FederatedAveraging`.
 
----
-
 ## Project Structure
 
-After unzipping, you should see something like:
 ```
 FedAvg_Manim/
-├── federated_averaging.py # Main Manim animation script (FederatedAveraging scene)
-├── media/ # Generated outputs (created/updated by Manim)
-│ └── videos/
-│ └── federated_averaging/
-│ └── 480p15/ # Existing low‑quality render(s)
-├── requirements.txt # Python dependencies for this project
-└── README.md # This file
+├── federated_averaging.py    # Main Manim animation script
+├── media/                     # Generated outputs (created by Manim)
+│   └── videos/
+│       └── federated_averaging/
+│           └── 480p15/        # Low-quality renders
+├── requirements.txt           # Python dependencies
+└── README.md                  # This file
 ```
 
-You are expected to create **your own** virtual environment (see below); 
-
----
+**Note:** You are expected to create your own virtual environment (see Installation below).
 
 ## Scene Included
 
-`federated_averaging.py` defines one main scene:
+### FederatedAveraging
 
-1. **FederatedAveraging**  
-   - Introduces FedAvg and its importance.  
-   - Explains key parameters \(C, E, \eta, T\).  
-   - Shows client selection and local training.  
-   - Visualizes gradient computation and local model updates.  
-   - Animates server aggregation with the FedAvg formula and \(n_k/n\) weights.  
-   - Concludes with a high‑level summary of what FedAvg achieves.
-
----
+The main scene that:
+- Introduces FedAvg and its importance
+- Explains key parameters (C, E, η, T)
+- Shows client selection and local training
+- Visualizes gradient computation and local model updates
+- Animates server aggregation with the FedAvg formula and n_k/n weights
+- Concludes with a high-level summary of what FedAvg achieves
 
 ## Requirements
 
 - Python 3.10 or 3.11
 - Manim Community v0.19.0
 - FFmpeg (for video rendering)
-- NumPy [web:17][web:22]
+- NumPy
 
-These are listed in `requirements.txt`.
+These dependencies are listed in `requirements.txt`.
 
----
+## Installation
 
-## Installation – Create Your Own Virtual Environment
+### Step 1: Navigate to the project folder
 
-You will create and manage your own environment.
+```bash
+cd FedAvg_Manim
+```
 
-1. **Navigate to the project folder:**
+### Step 2: Create a virtual environment
 
-cd "FedAvg_Manim"
-
-
-2. **Create a virtual environment (example: `fedavg-env`):**
-
+```bash
 python -m venv fedavg-env
+```
 
+### Step 3: Activate the environment
 
-3. **Activate the environment:**
+**Windows (PowerShell):**
+```powershell
+fedavg-env\Scripts\Activate.ps1
+```
 
-- **Windows (PowerShell)**
+**Windows (cmd):**
+```cmd
+fedavg-env\Scripts\activate.bat
+```
 
-  ```
-  fedavg-env\Scripts\Activate.ps1
-  ```
+**Linux / macOS:**
+```bash
+source fedavg-env/bin/activate
+```
 
-- **Windows (cmd)**
+### Step 4: Install dependencies
 
-  ```
-  fedavg-env\Scripts\activate.bat
-  ```
-
-- **Linux / macOS**
-
-  ```
-  source fedavg-env/bin/activate
-  ```
-
-4. **Install dependencies inside the environment:**
-
+```bash
 pip install -r requirements.txt
+```
 
+### Step 5: Verify FFmpeg installation
 
-5. **Ensure FFmpeg is installed** and available on your PATH (so `ffmpeg -version` prints version info in a terminal). [web:21]
+Ensure FFmpeg is installed and available on your PATH:
 
----
+```bash
+ffmpeg -version
+```
+
+This should print version information. If not, install FFmpeg from [ffmpeg.org](https://ffmpeg.org/).
 
 ## Usage
 
 All commands below assume:
+- You are in the `FedAvg_Manim/` folder
+- Your virtual environment (`fedavg-env`) is activated
+- `federated_averaging.py` is present
 
-- You are in the `FedAvg_Manim/` folder.
-- Your virtual environment (`fedavg-env`) is activated.
-- `federated_averaging.py` is present.
+### Render the FedAvg scene (low-quality preview)
 
-### Render the FedAvg scene (low‑quality preview)
-
+```bash
 manim -pql federated_averaging.py FederatedAveraging
+```
 
-
-- `-p` : Play the video after rendering.
-- `-q l` : Low‑quality render (`480p15`) for fast previews.
-
-Because this project currently only includes low‑quality outputs, this is the default quality used.
+**Flags:**
+- `-p`: Play the video after rendering
+- `-ql`: Low-quality render (480p15) for fast previews
 
 ### Render at higher quality (optional)
 
-If you want to generate a higher quality version (e.g., 1080p60), you can run:
+For a 1080p60 high-quality version:
 
+```bash
 manim -pqh federated_averaging.py FederatedAveraging
+```
 
-
-On first use, this will create a new folder such as:
-
+This will create a new folder:
+```
 media/videos/federated_averaging/1080p60/
+```
 
+### Other quality options
 
-and write a higher‑resolution `FederatedAveraging.mp4` there. [web:17]
-
----
+- `-ql`: Low quality (480p15) – fastest
+- `-qm`: Medium quality (720p30)
+- `-qh`: High quality (1080p60)
+- `-qk`: 4K quality (2160p60) – slowest
 
 ## Output
 
-Existing low‑quality renders are stored in:
-
-
-New renders will appear in the appropriate subfolder based on the quality flag you choose (`480p15`, `1080p60`, etc.).
+Rendered videos are stored in:
+```
+media/videos/federated_averaging/<quality>/FederatedAveraging.mp4
+```
 
 You can:
-
-- Open these `.mp4` files with any video player.
-- Embed them in slides or reports.
-- Replace them by re‑running the Manim commands after editing the script.
-
----
+- Open these `.mp4` files with any video player
+- Embed them in slides or reports
+- Replace them by re-running the Manim commands after editing the script
 
 ## Notes
 
-- This project uses Manim Community Edition; see the official documentation for more flags, resolution settings, and configuration options. [web:19]
+- This project uses **Manim Community Edition**. See the [official documentation](https://docs.manim.community/) for more flags, resolution settings, and configuration options.
 - Rendering time depends on your hardware and chosen quality level.
-- The virtual environment (`fedavg-env`) you create is local to your machine and is **not** included in this submission; other users should follow the same steps to set up their own environment.
+- The virtual environment (`fedavg-env`) is local to your machine and is **not** included in this repository. Other users should follow the installation steps to set up their own environment.
 
+## Learn More
 
+- [Manim Community Documentation](https://docs.manim.community/)
+- [FedAvg Paper](https://arxiv.org/abs/1602.05629) – McMahan et al., 2017
+- [Federated Learning Overview](https://federated.withgoogle.com/)
+
+## Contributing
+
+Feel free to modify `federated_averaging.py` to add new scenes, adjust animations, or extend the explanation. After making changes, re-render using the commands above.
+
+## License
+
+This project is provided as-is for educational purposes.
