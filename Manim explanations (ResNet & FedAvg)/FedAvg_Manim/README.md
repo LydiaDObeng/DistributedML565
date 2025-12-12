@@ -26,7 +26,7 @@ All of this is implemented in a single Manim scene named `FederatedAveraging`.
 ## Project Structure
 
 After unzipping, you should see something like:
-
+```
 FedAvg_Manim/
 ├── federated_averaging.py # Main Manim animation script (FederatedAveraging scene)
 ├── media/ # Generated outputs (created/updated by Manim)
@@ -35,7 +35,7 @@ FedAvg_Manim/
 │ └── 480p15/ # Existing low‑quality render(s)
 ├── requirements.txt # Python dependencies for this project
 └── README.md # This file
-
+```
 
 You are expected to create **your own** virtual environment (see below); 
 
