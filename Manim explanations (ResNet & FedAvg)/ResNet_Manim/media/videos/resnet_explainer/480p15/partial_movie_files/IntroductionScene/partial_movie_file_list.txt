@@ -1,7 +1,0 @@
-# This file is used internally by FFMPEG.
-file 'file:C:/Users/megzu/OneDrive - University of Arizona/Intro to DL Project/resnet_manim/media/videos/resnet_explainer/480p15/partial_movie_files/IntroductionScene/1185818338_3110307351_223132457.mp4'
-file 'file:C:/Users/megzu/OneDrive - University of Arizona/Intro to DL Project/resnet_manim/media/videos/resnet_explainer/480p15/partial_movie_files/IntroductionScene/624642324_2341082278_277539768.mp4'
-file 'file:C:/Users/megzu/OneDrive - University of Arizona/Intro to DL Project/resnet_manim/media/videos/resnet_explainer/480p15/partial_movie_files/IntroductionScene/624642324_1564095356_2167090071.mp4'
-file 'file:C:/Users/megzu/OneDrive - University of Arizona/Intro to DL Project/resnet_manim/media/videos/resnet_explainer/480p15/partial_movie_files/IntroductionScene/624642324_2341082278_3295103436.mp4'
-file 'file:C:/Users/megzu/OneDrive - University of Arizona/Intro to DL Project/resnet_manim/media/videos/resnet_explainer/480p15/partial_movie_files/IntroductionScene/624642324_3886691976_2343265916.mp4'
-file 'file:C:/Users/megzu/OneDrive - University of Arizona/Intro to DL Project/resnet_manim/media/videos/resnet_explainer/480p15/partial_movie_files/IntroductionScene/624642324_3163221738_3409884280.mp4'
